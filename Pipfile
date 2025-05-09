@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 sqlalchemy = "*"
-flask-sqlalchemy = "*"
 psycopg2-binary = "*"
 python-dotenv = "==1.0.0"
 mysqlclient = "==2.2.0"
@@ -16,9 +15,10 @@ flask-admin = "==1.6.1"
 wtforms = "==3.0.1"
 eralchemy2 = "*"
 flask-cors = "*"
-flask = "*"
 flask-swagger = "*"
 flask-migrate = "*"
+flask = "*"
+flask-sqlalchemy = "*"
 
 [requires]
 python_version = "3.13"
