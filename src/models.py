@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, ForeignKey, Column, Table, Enum
+from sqlalchemy import String, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -10,14 +10,14 @@ class Users(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean())
+    is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String(50), nullable=False)
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)
 
     # relationship with other tables
-    followers: Mapped[list["Followers"]] = relationship(back_populates="user_from")
-    following: Mapped[list["Followers"]] = relationship(back_populates="user_to")
+    followers: Mapped[list["Followers"]] = relationship(foreign_keys="[Followers.user_from_id]", back_populates="user_from")
+    following: Mapped[list["Followers"]] = relationship(foreign_keys="[Followers.user_to_id]", back_populates="user_to")
     posts: Mapped[list["Posts"]] = relationship(back_populates="user")
     comments: Mapped["Comments"] = relationship(back_populates="user")
 
@@ -40,8 +40,11 @@ class Followers(db.Model):
     user_to_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
 
     # relationship with other tables
-    user_from: Mapped["Users"] = relationship(back_populates="followers")
-    user_to: Mapped["Users"] = relationship(back_populates="following")
+    #Had error which could not determine relationship between parent/child. 
+    # To solve followed here: https://www.reddit.com/r/flask/comments/q06d3a/ambiguousforeignkeyserror_could_not_determine/
+
+    user_from: Mapped["Users"] = relationship(foreign_keys=[user_from_id], back_populates="followers")
+    user_to: Mapped["Users"] = relationship(foreign_keys=[user_from_id], back_populates="following")
 
     def serialize(self):
         return {
@@ -94,7 +97,7 @@ class MediaType(enum.Enum):
 class Media(db.Model):
     __tablename__='media'
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    type_media: Mapped[MediaType] = mapped_column(nullable=False)
+    type_media: Mapped[MediaType] = mapped_column(Enum(MediaType), nullable=False)
     url: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=False)
 
@@ -106,5 +109,5 @@ class Media(db.Model):
             "id": self.id,
             "type": self.type_media.value,
             "link": self.url,
-            "post": self.post.serialize() if self.post else None
+            "post": self.posts.serialize() if self.posts else None
         }
